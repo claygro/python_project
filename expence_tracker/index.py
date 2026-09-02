@@ -1,9 +1,9 @@
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from tabulate import tabulate
+from bson import ObjectId
 
-# table
-table = []
+
 
 # connection string
 MONGODB_CONNECTION_URL = "mongodb://localhost:27017/"
@@ -30,6 +30,8 @@ def add_expense(amount, category, type, description):
 
 # list expense
 def list_expense():
+    table = []
+
     try:
         response = collection_name.find()
         for expense in response:
@@ -42,6 +44,8 @@ def list_expense():
                     expense["description"],
                 ]
             )
+
+        (table.sort(reverse=True),)
         print(
             tabulate(
                 table,
@@ -52,6 +56,42 @@ def list_expense():
 
     except PyMongoError as e:
         print(f"Failed to list the expense: {e}")
+
+
+# delete expense
+def delete_expense(expense_id):
+    try:
+        data = collection_name.delete_one({"_id": ObjectId(expense_id)})
+        if data.acknowledged:
+            print("Delete successfully")
+        else:
+            print("No expense found or invalid expense id")
+    except PyMongoError as e:
+        print(f"Failed to delete expense: {e}")
+
+
+# update expense
+def update_expense(expense_id, amount, category, type, description):
+    try:
+        newUpdateData = {}
+
+        if amount and amount != "":
+            newUpdateData["amount"] = amount
+
+        if category and category != "":
+            newUpdateData["category"] = category
+
+        if type and type != "":
+            newUpdateData["type"] = type
+        if description and description != "":
+            newUpdateData["description"] = description
+
+        data = collection_name.update_one(
+            {"_id": ObjectId(expense_id)}, {"$set": newUpdateData}
+        )
+        print(data)
+    except PyMongoError as e:
+        print(f"Failed to delete expense: {e}")
 
 
 # main function
@@ -71,6 +111,22 @@ def main():
                 add_expense(amount, category, type, description)
             case "2":
                 list_expense()
+            case "3":
+                list_expense()
+                expense_id = input("Enter the Id you want to delete: ")
+                delete_expense(expense_id)
+            case "4":
+                list_expense()
+                expense_id = input("Enter the id you want to update: ")
+                amount = input("Enter the ammount: ")
+                category = input("Enter the category: ")
+                type = input("Enter the type like incomming or outgoing: ")
+                description = input("Enter the description: ")
+                update_expense(expense_id, amount, category, type, description)
+            case "5":
+                break
+            case _:
+                print("Invalid choice")
 
 
 if __name__ == "__main__":
