@@ -1,4 +1,9 @@
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+from tabulate import tabulate
+
+# table
+table = []
 
 # connection string
 MONGODB_CONNECTION_URL = "mongodb://localhost:27017/"
@@ -23,6 +28,32 @@ def add_expense(amount, category, type, description):
         print("Expense added successfully")
 
 
+# list expense
+def list_expense():
+    try:
+        response = collection_name.find()
+        for expense in response:
+            table.append(
+                [
+                    str(expense["_id"]),
+                    expense["amount"],
+                    expense["category"],
+                    expense["type"],
+                    expense["description"],
+                ]
+            )
+        print(
+            tabulate(
+                table,
+                headers=["ID", "Amount", "Category", "Type", "Description"],
+                tablefmt="rounded_outline",
+            )
+        )
+
+    except PyMongoError as e:
+        print(f"Failed to list the expense: {e}")
+
+
 # main function
 def main():
     while True:
@@ -38,6 +69,8 @@ def main():
                 type = input("Enter the type like incomming or outgoing: ")
                 description = input("Enter the description: ")
                 add_expense(amount, category, type, description)
+            case "2":
+                list_expense()
 
 
 if __name__ == "__main__":
